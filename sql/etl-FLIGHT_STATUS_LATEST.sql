@@ -48,19 +48,6 @@ WHERE SCHEDULED_DEPARTURE_DATE_LOCAL IS NOT NULL;
 SELECT * FROM dim_date_staging;
 
 
--- Tabulka dim_time_staging
-CREATE OR REPLACE TABLE dim_time_staging AS
-    SELECT SCHEDULED_DEPARTURE_TIME_LOCAL AS time_val
-FROM FLIGHT_STATUS_LATEST_STAGING
-WHERE SCHEDULED_DEPARTURE_TIME_LOCAL IS NOT NULL
-UNION ALL
-    SELECT SCHEDULED_ARRIVAL_TIME_LOCAL
-FROM FLIGHT_STATUS_LATEST_STAGING
-WHERE SCHEDULED_ARRIVAL_TIME_LOCAL IS NOT NULL;
-
-SELECT * FROM dim_time_staging;
-
-
 -- Tabulka dim_flight_state_staging
 CREATE OR REPLACE TABLE dim_flight_state_staging AS
 SELECT FLIGHT_STATE
@@ -103,7 +90,7 @@ SELECT * FROM dim_airport;
 
 -- Transform dim_date - pridanie dátových atribútov + surrogate key
 CREATE OR REPLACE TABLE dim_date AS
-SELECT
+SELECT DISTINCT
     TO_NUMBER(TO_VARCHAR(date, 'YYYYMMDD')) AS date_id,
     date,
     DAY(date) AS day,
@@ -115,30 +102,34 @@ FROM dim_date_staging;
 SELECT * FROM dim_date;
 
 
--- Transform dim_time - deduplikácia, surrogate key, výpočty časových segmentov
+-- Tabulka dim_time
 CREATE OR REPLACE TABLE dim_time AS
-WITH unique_times AS (
-    SELECT DISTINCT time_val
-    FROM dim_time_staging
-    WHERE time_val IS NOT NULL
+WITH minutes AS (
+    SELECT
+        SEQ4() AS minute_of_day
+    FROM TABLE(GENERATOR(ROWCOUNT => 1440))
 )
 SELECT
-    ROW_NUMBER() OVER (ORDER BY time_val) AS time_id,
-    TO_TIME(time_val) AS time,
-    EXTRACT(hour FROM time_val) AS hour,
-    EXTRACT(minute FROM time_val) AS minute,
+    minute_of_day + 1 AS time_id,
+    TIME_FROM_PARTS(
+        FLOOR(minute_of_day / 60),
+        MOD(minute_of_day, 60),
+        0
+    ) AS time,
+    FLOOR(minute_of_day / 60) AS hour,
+    MOD(minute_of_day, 60) AS minute,
     CASE
-        WHEN EXTRACT(hour FROM time_val) BETWEEN 5 AND 11 THEN 'morning'
-        WHEN EXTRACT(hour FROM time_val) BETWEEN 12 AND 16 THEN 'afternoon'
-        WHEN EXTRACT(hour FROM time_val) BETWEEN 17 AND 20 THEN 'evening'
+        WHEN FLOOR(minute_of_day / 60) BETWEEN 5 AND 11 THEN 'morning'
+        WHEN FLOOR(minute_of_day / 60) BETWEEN 12 AND 16 THEN 'afternoon'
+        WHEN FLOOR(minute_of_day / 60) BETWEEN 17 AND 20 THEN 'evening'
         ELSE 'night'
     END AS part_of_day,
     CASE
-        WHEN EXTRACT(hour FROM time_val) BETWEEN 7 AND 9
-          OR EXTRACT(hour FROM time_val) BETWEEN 16 AND 18 THEN TRUE
+        WHEN FLOOR(minute_of_day / 60) BETWEEN 7 AND 9
+          OR FLOOR(minute_of_day / 60) BETWEEN 16 AND 18 THEN TRUE
         ELSE FALSE
     END AS is_peak
-FROM unique_times;
+FROM minutes;
 
 SELECT * FROM dim_time;
 
@@ -155,3 +146,38 @@ SELECT
 FROM unique_states;
 
 SELECT * FROM dim_flight_state;
+    
+
+
+--Tabulka fact_flight_status
+CREATE OR REPLACE TABLE fact_flight_status AS
+SELECT
+    ROW_NUMBER() OVER (ORDER BY f.ORIGIN_MESSAGE_TIMESTAMP, f.FLIGHT_NUMBER) AS flight_status_id,
+    f.FLIGHT_NUMBER,
+    fs.flight_state_id,
+    a.airline_id,
+    dap.airport_id AS departure_airport_id,
+    aap.airport_id AS arrival_airport_id,
+    dd.date_id AS scheduled_departure_date_id,
+    da.date_id AS scheduled_arrival_date_id,
+    dt_depart.time_id AS scheduled_departure_time_id,
+    dt_arrive.time_id AS scheduled_arrival_time_id,
+    f.DEPARTURE_ACTUAL_OUTGATE_LOCAL AS actual_departure_time,
+    f.ARRIVAL_ACTUAL_INGATE_LOCAL AS actual_arrival,
+    f.SCHEDULED_DEPARTURE_TIME_LOCAL AS scheduled_departure_time,
+    f.SCHEDULED_ARRIVAL_TIME_LOCAL AS scheduled_arrival_time,
+    f.ACTUAL_TOTAL_SEATS,
+    f.PREDICTED_TOTAL_SEATS,
+    DATEDIFF('minute', f.SCHEDULED_DEPARTURE_TIME_LOCAL, f.DEPARTURE_ACTUAL_OUTGATE_LOCAL) AS departure_delay_minutes,
+    DATEDIFF('minute', f.SCHEDULED_ARRIVAL_TIME_LOCAL, f.ARRIVAL_ACTUAL_INGATE_LOCAL) AS arrival_delay_minutes
+FROM FLIGHT_STATUS_LATEST_STAGING f
+LEFT JOIN dim_flight_state fs ON f.FLIGHT_STATE = fs.FLIGHT_STATE
+LEFT JOIN dim_airline a ON f.IATA_CARRIER_CODE = a.IATA_CARRIER_CODE
+LEFT JOIN dim_airport dap ON f.DEPARTURE_IATA_AIRPORT_CODE = dap.IATA_AIRPORT_CODE
+LEFT JOIN dim_airport aap ON f.ARRIVAL_IATA_AIRPORT_CODE = aap.IATA_AIRPORT_CODE
+LEFT JOIN dim_date dd ON TO_NUMBER(TO_VARCHAR(f.SCHEDULED_DEPARTURE_DATE_LOCAL, 'YYYYMMDD')) = dd.date_id
+LEFT JOIN dim_date da ON TO_NUMBER(TO_VARCHAR(f.SCHEDULED_ARRIVAL_TIME_LOCAL::DATE, 'YYYYMMDD')) = da.date_id
+LEFT JOIN dim_time dt_depart ON TO_TIME(f.SCHEDULED_DEPARTURE_TIME_LOCAL) = dt_depart.time
+LEFT JOIN dim_time dt_arrive ON TO_TIME(f.SCHEDULED_ARRIVAL_TIME_LOCAL) = dt_arrive.time;
+
+SELECT * FROM fact_flight_status;
