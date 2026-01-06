@@ -131,11 +131,6 @@ SELECT
         WHEN FLOOR(minute_of_day / 60) BETWEEN 17 AND 20 THEN 'evening'
         ELSE 'night'
     END AS part_of_day,
-    CASE
-        WHEN FLOOR(minute_of_day / 60) BETWEEN 7 AND 9
-          OR FLOOR(minute_of_day / 60) BETWEEN 16 AND 18 THEN TRUE
-        ELSE FALSE
-    END AS is_peak
 FROM minutes;
 
 SELECT * FROM dim_time LIMIT 10;
