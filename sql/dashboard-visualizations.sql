@@ -59,14 +59,21 @@ JOIN dim_time t ON f.scheduled_departure_time_id = t.time_id
 GROUP BY t.hour
 ORDER BY t.hour;
 
---Top 10 destinácií podľa počtu letov
+---Priemerné meškanie odletov podľa letiska a časti dňa (Top 25 letísk) (Heatgrid)
+WITH top_airports AS (
+    SELECT ap.airport_id, ap.IATA_AIRPORT_CODE, COUNT(*) AS flight_count
+    FROM fact_flight_status f
+    JOIN dim_airport ap ON f.departure_airport_id = ap.airport_id
+    GROUP BY ap.airport_id, ap.IATA_AIRPORT_CODE
+    ORDER BY flight_count DESC
+    LIMIT 25
+)
 SELECT
-    ap.COUNTRY_CODE AS destination_country,
-    COUNT(*) AS number_of_flights
+    ta.IATA_AIRPORT_CODE,
+    t.part_of_day,
+    AVG(f.departure_delay_minutes) AS avg_delay
 FROM fact_flight_status f
-JOIN dim_airport ap
-    ON f.arrival_airport_id = ap.airport_id
-WHERE ap.COUNTRY_CODE IS NOT NULL
-GROUP BY ap.COUNTRY_CODE
-ORDER BY number_of_flights DESC
-LIMIT 10;
+JOIN top_airports ta ON f.departure_airport_id = ta.airport_id
+JOIN dim_time t ON f.scheduled_departure_time_id = t.time_id
+GROUP BY ta.IATA_AIRPORT_CODE, t.part_of_day
+ORDER BY ta.IATA_AIRPORT_CODE, t.part_of_day;
