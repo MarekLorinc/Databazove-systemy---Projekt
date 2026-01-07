@@ -186,3 +186,11 @@ LEFT JOIN dim_time dt_actual_depart ON TO_TIME(f.DEPARTURE_ACTUAL_OUTGATE_LOCAL)
 LEFT JOIN dim_time dt_actual_arrive ON TO_TIME(f.ARRIVAL_ACTUAL_INGATE_LOCAL) = dt_actual_arrive.time;
 
 SELECT * FROM fact_flight_status LIMIT 10;
+
+
+--Dropnutie staging tabuliek
+DROP TABLE IF EXISTS FLIGHT_STATUS_LATEST_staging;
+DROP TABLE IF EXISTS dim_airline_staging;
+DROP TABLE IF EXISTS dim_airport_staging;
+DROP TABLE IF EXISTS dim_date_staging;
+DROP TABLE IF EXISTS dim_flight_state_staging;
