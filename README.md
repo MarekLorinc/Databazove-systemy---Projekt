@@ -8,7 +8,11 @@ Cieľom analýzy je vytvoriť dátový model, ktorý umožní sledovať a analyz
 
 Dataset obsahuje jednu hlavnú tabuľku so 73 stĺpcami, ktoré pokrývajú rôzne aspekty letov, ako sú informácie o leteckej spoločnosti, letisku odletu a príletu, plánované a skutočné časy a ďalšie.
 
-![Obrázok 1](/img/scheme-erd.png "Obrázok 1: ERD schéma datasetu  FLIGHT_STATUS_LATEST_SAMPLE")
+<p align="center">
+  <img src="/img/scheme_erd.png" alt="Obrázok 1: ERD schéma datasetu  FLIGHT_STATUS_LATEST_SAMPLE">
+</p>
+
+<p align="center"><em>Obrázok 1: ERD schéma datasetu  FLIGHT_STATUS_LATEST_SAMPLE</em></p>
 
 Pre účely projektu boli zvolené relevantné atribúty na vytvorenie dimenzionálneho modelu a ELT procesu.
 
@@ -18,7 +22,11 @@ Pre účely projektu boli zvolené relevantné atribúty na vytvorenie dimenzion
 
 Pre efektívnu analýzu a vizualizáciu dát bol navrhnutý hviezdicový (Star Schema) dátový model pozostávajúci z jednej faktovej tabuľky a viacerých dimenzií:
 
-![Obrázok 2](/img/scheme-star.png "Obrázok 2: Star schéma")
+<p align="center">
+  <img src="/img/scheme_Star.png" alt="Obrázok 2: Star schéma">
+</p>
+
+<p align="center"><em>Obrázok 2: Star schéma</em></p>
 
 - **Faktová tabuľka `fact_flight_status`** obsahuje metriky ako skutočné a plánované časy, počet sedadiel a meškania.
 - **Dimenzia `dim_airline`** s informáciami o leteckej spoločnosti (kódy IATA_CARRIER, ICAO_CARRIER).
@@ -261,7 +269,12 @@ Dashboard obsahuje 7 vizualizácií, ktoré poskytujú prehľad o kľúčových 
 
 ### Graf 1: Priemerné meškanie podľa leteckej spoločnosti
 
-![Obrázok 3](/img/Graph_1.png "Obrázok 3: Graf 1")
+<p align="center">
+  <img src="/img/Graph_1.png" alt="Obrázok 3: Priemerné meškanie podľa leteckej spoločnosti">
+</p>
+
+<p align="center"><em>Obrázok 3: Priemerné meškanie podľa leteckej spoločnosti</em></p>
+
 
 Táto vizualizácia zobrazuje priemerné príletové meškanie pre jednotlivé letecké spoločnosti. Umožňuje identifikovať spoločnosti s najväčšími meškaniami, čo môže byť základom pre analýzu príčin a optimalizáciu prevádzky.
 
@@ -276,9 +289,15 @@ GROUP BY a.IATA_CARRIER_CODE
 ORDER BY avg_arrival_delay DESC;
 ```
 
+---
+
 ### Graf 2: Počet letov podľa stavu letu
 
-![Obrázok 4](/img/Graph_2.png "Obrázok 4: Graf 2")
+<p align="center">
+  <img src="/img/Graph_2.png" alt="Obrázok 4: Počet letov podľa stavu letu">
+</p>
+
+<p align="center"><em>Obrázok 4: Počet letov podľa stavu letu</em></p>
 
 Graf znázorňuje rozdelenie počtu letov podľa ich aktuálneho stavu (napríklad odlet, prílet, meškanie, zrušenie). Táto vizualizácia pomáha pochopiť, v akých fázach sa najviac letov nachádza.
 
@@ -293,9 +312,15 @@ GROUP BY fs.FLIGHT_STATE
 ORDER BY flight_count DESC;
 ```
 
+---
+
 ### Graf 3: Počet letov podľa časti dňa
 
-![Obrázok 5](/img/Graph_3.png "Obrázok 5: Graf 3")
+<p align="center">
+  <img src="/img/Graph_3.png" alt="Obrázok 5: Počet letov podľa časti dňa">
+</p>
+
+<p align="center"><em>Obrázok 5: Počet letov podľa časti dňa</em></p>
 
 Tento graf ukazuje, koľko letov je plánovaných v jednotlivých častiach dňa (ráno, popoludnie, večer, noc). Pomáha identifikovať časové obdobia s najvyššou leteckou aktivitou.
 
@@ -310,9 +335,15 @@ GROUP BY t.part_of_day
 ORDER BY flight_count DESC;
 ```
 
+---
+
 ### Graf 4: Porovnanie skutočných vs. predikovaných sedadiel podľa leteckej spoločnosti
 
-![Obrázok 6](/img/Graph_4.png "Obrázok 6: Graf 4")
+<p align="center">
+  <img src="/img/Graph_4.png" alt="Obrázok 6: Porovnanie skutočných vs. predikovaných sedadiel podľa leteckej spoločnosti">
+</p>
+
+<p align="center"><em>Obrázok 6: Porovnanie skutočných vs. predikovaných sedadiel podľa leteckej spoločnosti</em></p>
 
 Graf porovnáva priemerný počet skutočne dostupných sedadiel oproti predikovaným hodnotám pre jednotlivé letecké spoločnosti. Pomáha sledovať presnosť predpovedí kapacity.
 
@@ -327,9 +358,15 @@ GROUP BY a.IATA_CARRIER_CODE
 ORDER BY avg_actual_seats DESC;
 ```
 
+---
+
 ### Graf 5: Top 10 destinácií podľa počtu letov
 
-![Obrázok 7](/img/Graph_5.png "Obrázok 7: Graf 5")
+<p align="center">
+  <img src="/img/Graph_5.png" alt="Obrázok 7: Top 10 destinácií podľa počtu letov">
+</p>
+
+<p align="center"><em>Obrázok 7: Top 10 destinácií podľa počtu letov</em></p>
 
 Táto vizualizácia zobrazuje desať krajín s najväčším počtom príletov. Umožňuje rýchlo identifikovať najfrekventovanejšie cieľové destinácie leteckej dopravy.
 
@@ -346,9 +383,15 @@ ORDER BY number_of_flights DESC
 LIMIT 10;
 ```
 
+---
+
 ### Graf 6: Priemerné meškanie odletov počas dňa
 
-![Obrázok 8](/img/Graph_6.png "Obrázok 8: Graf 6")
+<p align="center">
+  <img src="/img/Graph_6.png" alt="Obrázok 8: Priemerné meškanie odletov počas dňa">
+</p>
+
+<p align="center"><em>Obrázok 8: Priemerné meškanie odletov počas dňa</em></p>
 
 Graf znázorňuje priemerné odletové meškanie (v minútach) podľa hodiny dňa. Umožňuje odhaliť časové obdobia, kedy dochádza k najväčším meškaniam.
 
@@ -362,9 +405,15 @@ GROUP BY t.hour
 ORDER BY t.hour;
 ```
 
+---
+
 ### Graf 7: Priemerné meškanie odletov podľa letiska a časti dňa (Top 25 letísk)
 
-![Obrázok 9](/img/Graph_7.png "Obrázok 9: Graf 7")
+<p align="center">
+  <img src="/img/Graph_7.png" alt="Obrázok 9: Priemerné meškanie odletov podľa letiska a časti dňa (Top 25 letísk)">
+</p>
+
+<p align="center"><em>Obrázok 9: Priemerné meškanie odletov podľa letiska a časti dňa (Top 25 letísk)</em></p>
 
 Táto vizualizácia ukazuje priemerné meškanie odletov v rôznych častiach dňa pre top 25 letísk podľa počtu letov. Pomáha identifikovať časové a lokálne vzory v meškaní, čo je užitočné pre optimalizáciu prevádzky a plánovanie.
 
